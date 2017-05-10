@@ -491,8 +491,6 @@ var SwitchAdapter = function SwitchAdapter() {
       window.__switch_placementCodeChains[bid.placementCode] = chainId;
     }
 
-    applySwitchIDTargets();
-
     var bidsStr = JSON.stringify(BidRequests),
         reqURL = "//" + params.bids[0].params.domain + "/adserver/kromer.php?load_id=" + window.__switch_loadId +
             "&bids=" + encodeURIComponent(bidsStr) +
@@ -506,29 +504,6 @@ var SwitchAdapter = function SwitchAdapter() {
     // @endif
 
     adloader.loadScript(reqURL);
-  }
-
-  function applySwitchIDTargets() {
-    // @if NODE_ENV='debug'
-    utils.logMessage("Attempting to set Switch Chain IDs to GPT targeting");
-    // @endif
-
-    window.googletag.pubads().getSlots().forEach(function (gptSlot) {
-      var gptDivId = gptSlot.getSlotElementId();
-
-      if (typeof window.__switch_placementCodeChains !== "undefined" &&
-          typeof window.__switch_placementCodeChains[gptDivId] !== "undefined") {
-        // @if NODE_ENV='debug'
-        utils.logMessage("Targeting ChainId " + gptDivId + " = " + window.__switch_placementCodeChains[gptDivId]);
-        utils.logMessage("Targeting LoadId " + window.__switch_loadId);
-        // @endif
-
-        gptSlot.setTargeting("_swcid", window.__switch_placementCodeChains[gptDivId]);
-        gptSlot.setTargeting("_swlid", window.__switch_loadId);
-      } else {
-        utils.logMessage("Switch: window.__switch_placementCodeChains Bad");
-      }
-    });
   }
 
   function getTopUrl() {
@@ -587,12 +562,10 @@ var SwitchAdapter = function SwitchAdapter() {
         utils.logMessage('Switch bid available for ' + bidResponse.placementCode);
         // @endif
 
-        const bidRequest = utils.getBidRequest(bidResponse.bidId);
-
         bidObject = bidfactory.createBid(1);
         bidObject.bidderCode = 'switch';
         bidObject.cpm = bidResponse.cpm;
-        bidObject.ad = createAdHtml(bidRequest.params.zoneId);
+        bidObject.ad = createAdHtml(bidResponse.zoneId);
         bidObject.width = bidResponse.width;
         bidObject.height = bidResponse.height;
 
