@@ -544,9 +544,9 @@ var SwitchAdapter = function SwitchAdapter() {
   }
 
   function createAdHtml(zoneId) {
-    return `<div id="switch_placeholder_${zoneId}" class="switch_placeholder"></div>
+    return `<html><head></head><body><div id="switch_placeholder_${zoneId}" class="switch_placeholder"></div>
     <script> (__scads = window.__scads || []).push({"z":${zoneId},"targetId":"switch_placeholder_${zoneId}","domain":"delivery.yieldoptimisers.net","width":"0","height":"0"}); </script>
-    <script async src="//delivery.yieldoptimisers.net/adserver/sat.js"></script>`;
+    <script async src="//delivery.yieldoptimisers.net/adserver/sat.js"></script></body></html>`;
   }
 
   $$PREBID_GLOBAL$$.switchParseBids = function(bidResponses) {
