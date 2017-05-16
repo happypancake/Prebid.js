@@ -12,6 +12,10 @@ function getIntegration() {
   return 'pbjs_lite_' + $$PREBID_GLOBAL$$.version;
 }
 
+function isSecure() {
+  return location.protocol === 'https:';
+}
+
 // use protocol relative urls for http or https
 const FASTLANE_ENDPOINT = '//fastlane.rubiconproject.com/a/api/fastlane.json';
 const VIDEO_ENDPOINT = '//fastlane-adv.rubiconproject.com/v1/auction/video';
@@ -28,6 +32,11 @@ var sizeMap = {
   16:'336x280',
   19:'300x100',
   31:'980x120',
+  32:'250x360',
+  33:'180x500',
+  35:'980x150',
+  37:'468x400',
+  38:'930x180',
   43:'320x50',
   44:'300x50',
   48:'300x300',
@@ -44,6 +53,7 @@ var sizeMap = {
   73:'320x160',
   78:'980x240',
   79:'980x300',
+  80:'980x400',
   83:'480x300',
   94:'970x310',
   96:'970x210',
@@ -240,6 +250,7 @@ function RubiconAdapter() {
       'alt_size_ids', parsedSizes.slice(1).join(',') || undefined,
       'p_pos', position,
       'rp_floor', floor,
+      'rp_secure', isSecure() ? '1' : '0',
       'tk_flint', getIntegration(),
       'p_screen_res', _getScreenResolution(),
       'kw', keywords,
