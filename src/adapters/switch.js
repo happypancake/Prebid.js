@@ -543,10 +543,10 @@ var SwitchAdapter = function SwitchAdapter() {
     return loc;
   }
 
-  function createAdHtml(zoneId) {
+  function createAdHtml(zoneId, adCode) {
     return `<html><head></head><body><div id="switch_placeholder_${zoneId}" class="switch_placeholder"></div>
     <script> (__scads = window.__scads || []).push({"z":${zoneId},"targetId":"switch_placeholder_${zoneId}","domain":"delivery.yieldoptimisers.net","width":"0","height":"0"}); </script>
-    <script async src="//delivery.yieldoptimisers.net/adserver/sat.js"></script></body></html>`;
+    <script async src="//delivery.yieldoptimisers.net/adserver/sat.js"></script>${adCode}</body></html>`;
   }
 
   $$PREBID_GLOBAL$$.switchParseBids = function(bidResponses) {
@@ -565,7 +565,7 @@ var SwitchAdapter = function SwitchAdapter() {
         bidObject = bidfactory.createBid(1);
         bidObject.bidderCode = 'switch';
         bidObject.cpm = bidResponse.cpm;
-        bidObject.ad = createAdHtml(bidResponse.zoneId);
+        bidObject.ad = createAdHtml(bidResponse.zoneId, bidResponse.ad);
         bidObject.width = bidResponse.width;
         bidObject.height = bidResponse.height;
 
