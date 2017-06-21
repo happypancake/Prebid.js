@@ -154,5 +154,10 @@
       "conversant": {
         "supportedMediaTypes": ["video"]
       }
+    },
+    {
+      "adform": {
+        "alias": "keymobile"
+      }
     }
 ]
