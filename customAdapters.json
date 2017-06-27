@@ -6,5 +6,10 @@
     "pubmatic",
     "switch",
     "rubicon",
-    "widespace"
+    "widespace",
+    {
+      "adform": {
+        "alias": "keymobile"
+      }
+    }    
 ]
