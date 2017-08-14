@@ -11,5 +11,10 @@
       "adform": {
         "alias": "keymobile"
       }
-    }    
+    },
+    {
+      "rubicon": {
+        "alias": "adwell"
+      }
+    }
 ]
