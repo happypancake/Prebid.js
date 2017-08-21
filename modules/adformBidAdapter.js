@@ -4,13 +4,14 @@ var bidmanager = require('src/bidmanager.js');
 var bidfactory = require('src/bidfactory.js');
 var STATUSCODES = require('src/constants.json').STATUS;
 var adaptermanager = require('src/adaptermanager');
+var Adapter = require('src/adapter.js');
 
-function AdformAdapter() {
-  return {
-    callBids: _callBids
-  };
+var AdformAdapter;
+AdformAdapter = function AdformAdapter() {
+  let baseAdapter = Adapter.createNew('adform');
 
-  function _callBids(params) {
+
+  baseAdapter.callBids = function(params) {
     var bid, _value, _key, i, j, k, l, reqParams;
     var bids = params.bids;
     var request = [];
@@ -47,7 +48,7 @@ function AdformAdapter() {
     $$PREBID_GLOBAL$$[callbackName] = handleCallback(bids);
 
     adloader.loadScript(request.join('&'));
-  }
+  };
 
   function formRequestUrl(reqData) {
     var key;
@@ -63,7 +64,7 @@ function AdformAdapter() {
   function handleCallback(bids) {
     return function handleResponse(adItems) {
       var bidObject;
-      var bidder = 'adform';
+      var bidder = baseAdapter.getBidderCode();
       var adItem;
       var bid;
       for (var i = 0, l = adItems.length; i < l; i++) {
@@ -160,8 +161,20 @@ function AdformAdapter() {
 
     return utftext;
   }
+
+  return {
+     createNew: AdformAdapter.createNew,
+     callBids: baseAdapter.callBids,
+     setBidderCode: baseAdapter.setBidderCode,
+     getBidderCode: baseAdapter.getBidderCode,
+   };
 }
 
+AdformAdapter.createNew = function() {
+  return new AdformAdapter();
+};
+
 adaptermanager.registerBidAdapter(new AdformAdapter(), 'adform');
+adaptermanager.aliasBidAdapter('adform', 'keymobile');
 
 module.exports = AdformAdapter;
