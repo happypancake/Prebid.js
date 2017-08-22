@@ -1,17 +1,17 @@
-var utils = require('src/utils.js');
-var adloader = require('src/adloader.js');
-var bidmanager = require('src/bidmanager.js');
-var bidfactory = require('src/bidfactory.js');
+var utils = require('src/utils');
+var adloader = require('src/adloader');
+var bidmanager = require('src/bidmanager');
+var bidfactory = require('src/bidfactory');
 var STATUSCODES = require('src/constants.json').STATUS;
 var adaptermanager = require('src/adaptermanager');
-var Adapter = require('src/adapter.js');
+var Adapter = require('src/adapter').default;
 
-var AdformAdapter;
-AdformAdapter = function AdformAdapter() {
-  let baseAdapter = Adapter.createNew('adform');
+const ADFORM_BIDDER_CODE = 'adform';
 
+function AdformAdapter() {
+  let baseAdapter = new Adapter(ADFORM_BIDDER_CODE);
 
-  baseAdapter.callBids = function(params) {
+  function _callBids(params) {
     var bid, _value, _key, i, j, k, l, reqParams;
     var bids = params.bids;
     var request = [];
@@ -162,19 +162,11 @@ AdformAdapter = function AdformAdapter() {
     return utftext;
   }
 
-  return {
-     createNew: AdformAdapter.createNew,
-     callBids: baseAdapter.callBids,
-     setBidderCode: baseAdapter.setBidderCode,
-     getBidderCode: baseAdapter.getBidderCode,
-   };
+  return Object.assign(this, baseAdapter, {
+    callBids: _callBids
+  });
 }
 
-AdformAdapter.createNew = function() {
-  return new AdformAdapter();
-};
-
-adaptermanager.registerBidAdapter(new AdformAdapter(), 'adform');
-adaptermanager.aliasBidAdapter('adform', 'keymobile');
-
+adaptermanager.registerBidAdapter(new AdformAdapter(), ADFORM_BIDDER_CODE);
+adaptermanager.aliasBidAdapter(ADFORM_BIDDER_CODE, 'keymobile');
 module.exports = AdformAdapter;

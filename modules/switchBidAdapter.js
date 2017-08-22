@@ -1,8 +1,11 @@
+var Adapter = require('src/adapter').default;
 var bidfactory = require('src/bidfactory');
 var bidmanager = require('src/bidmanager');
 var adloader = require('src/adloader');
 var utils = require('src/utils');
 var adaptermanager = require('src/adaptermanager');
+
+const SWITCH_BIDDER_CODE = 'switch';
 
 window.__switch_startTime = (new Date()).getTime();
 window.__switch_placementCodeChains = {};
@@ -458,7 +461,8 @@ window.__switch_fp = {
 };
 window.__switch_fp.setupEventHandlers();
 
-var SwitchAdapter = function SwitchAdapter() {
+function SwitchAdapter() {
+  var baseAdapter = new Adapter(SWITCH_BIDDER_CODE);
   var gth = getTopUrl(), chainId;
   var usersync = false;
 
@@ -558,7 +562,7 @@ var SwitchAdapter = function SwitchAdapter() {
         // @endif
 
         bidObject = bidfactory.createBid(1);
-        bidObject.bidderCode = 'switch';
+        bidObject.bidderCode = SWITCH_BIDDER_CODE;
         bidObject.cpm = bidResponse.cpm;
         bidObject.ad = bidResponse.ad;
         bidObject.width = bidResponse.width;
@@ -575,7 +579,7 @@ var SwitchAdapter = function SwitchAdapter() {
         // @endif
 
         bidObject = bidfactory.createBid(2);
-        bidObject.bidderCode = 'switch';
+        bidObject.bidderCode = SWITCH_BIDDER_CODE;
 
         bidmanager.addBidResponse(bidResponse.placementCode, bidObject);
       }
@@ -593,11 +597,10 @@ var SwitchAdapter = function SwitchAdapter() {
     }
   };
 
-  return {
+  return Object.assign(this, baseAdapter, {
     callBids: _callBids
-  };
-};
+  });
+}
 
-adaptermanager.registerBidAdapter(new SwitchAdapter, 'adform');
-
+adaptermanager.registerBidAdapter(new SwitchAdapter(), SWITCH_BIDDER_CODE);
 module.exports = SwitchAdapter;
