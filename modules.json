@@ -1,0 +1,12 @@
+[
+    "adformBidAdapter",
+    "appnexusBidAdapter",
+    "criteoBidAdapter",
+    "openxBidAdapter",
+    "pubmaticBidAdapter",
+    "switchBidAdapter",
+    "rubiconBidAdapter",
+    "widespaceBidAdapter",
+    "indexExchangeBidAdapter",
+    "hpcAnalyticsAdapter"
+]
