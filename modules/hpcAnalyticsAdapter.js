@@ -64,17 +64,13 @@ function getPayload() {
 
       let tempResult = tempStack.results[bidderPlacement];
 
-      // just apply
+      // just apply todo fix me
       if (tempResult.status === 'requested') {
 
-      }
-
-      if (response.args.cpm === 0 && tempResult.status !== 'responded') {
+      } else if (response.args.cpm === 0 && tempResult.status !== 'responded') {
         tempResult.status = 'empty';
-      }
-
-      // we have a larger response than previous
-      if ((response.args.cpm > tempResult.cpm) || (tempResult.status === 'requested' && response.args.cpm > 0)) || (tempResult.status === 'empty' && response.args.cpm > 0)) {
+      } else if ((response.args.cpm > tempResult.cpm) || (tempResult.status === 'requested' && response.args.cpm > 0)) || (tempResult.status === 'empty' && response.args.cpm > 0)) {
+        // we have a larger response than previous
         tempResult.status = 'responded';
         tempResult.cpm = response.args.cpm;
         tempResult.timeToRespond = response.args.timeToRespond;
