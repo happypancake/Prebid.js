@@ -47,8 +47,8 @@ function getPayload() {
         const bidderPlacement = `${request.bidder}_${request.placementCode}`;
 
         let tempResult = tempStack.results[bidderPlacement];
-        tempResult.bidder =  request.bidder;
-        tempResult.placement = request.placementCode;
+        tempResult.bidder =  placement.bidder;
+        tempResult.placement = placement.placementCode;
         tempResult.status = 'requested';
         tempStack.results[bidderPlacement] = tempResult;
       }
