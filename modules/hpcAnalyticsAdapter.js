@@ -44,12 +44,15 @@ function getPayload() {
       const request = event;
 
       for (let placement of event.args.bids) {
-        const bidderPlacement = `${request.bidder}_${request.placementCode}`;
+        const bidderPlacement = `${placement.bidder}_${placement.placementCode}`;
 
-        let tempResult = tempStack.results[bidderPlacement];
-        tempResult.bidder =  placement.bidder;
-        tempResult.placement = placement.placementCode;
-        tempResult.status = 'requested';
+        let tempResult = {
+          bidder: placement.bidder,
+          placement: placement.placementCode,
+          status: 'requested',
+          cpm: 0
+        };
+
         tempStack.results[bidderPlacement] = tempResult;
       }
     }
@@ -57,18 +60,25 @@ function getPayload() {
     // this can happen i many variations
     if (event.eventType === BID_RESPONSE) {
       const response = event;
-      const responseIsEmpty = (response.args.width === 0 || response.args.height === 0);
       const bidderPlacement = `${response.args.bidderCode}_${response.args.adUnitCode}`;
 
-      let tempResult = tempStack.results[bidderPlacement] === undefined ? {} : tempStack.results[bidderPlacement];
+      let tempResult = tempStack.results[bidderPlacement];
 
-      // if we already have responded make sure to not overwrite a better bid
-      if ((tempResult === {}) || (response.args.cpm > tempResult.cpm)) {
-        tempResult.status = responseIsEmpty ? 'empty' : 'responded';
+      // just apply
+      if (tempResult.status === 'requested') {
+
+      }
+
+      if (response.args.cpm === 0 && tempResult.status !== 'responded') {
+        tempResult.status = 'empty';
+      }
+
+      // we have a larger response than previous
+      if ((response.args.cpm > tempResult.cpm) || (tempResult.status === 'requested' && response.args.cpm > 0)) || (tempResult.status === 'empty' && response.args.cpm > 0)) {
+        tempResult.status = 'responded';
         tempResult.cpm = response.args.cpm;
         tempResult.timeToRespond = response.args.timeToRespond;
         tempResult.size = `${response.args.width}x${response.args.height}`;
-        tempStack.results[bidderPlacement] = tempResult;
       }
 
       tempStack.results[bidderPlacement] = tempResult;
