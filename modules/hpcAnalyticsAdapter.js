@@ -1,84 +1,156 @@
-import {ajax} from 'src/ajax';
+import { ajax } from 'src/ajax';
 import adapter from 'src/AnalyticsAdapter';
-import CONSTANTS from 'src/constants.json';
 import adaptermanager from 'src/adaptermanager';
-const utils = require('src/utils');
+import utils from 'src/utils';
+
+import CONSTANTS from 'src/constants.json';
 
 const url = 'https://api.bitgn.com/hpc?t=8e186e7f-1dd6-4b35-9846-05882a441bc0';
 const analyticsType = 'endpoint';
 
-let auctionInitConst = CONSTANTS.EVENTS.AUCTION_INIT;
-let auctionEndConst = CONSTANTS.EVENTS.AUCTION_END;
-let bidWonConst = CONSTANTS.EVENTS.BID_WON;
+const AUCTION_INIT = CONSTANTS.EVENTS.AUCTION_INIT;
+const AUCTION_END = CONSTANTS.EVENTS.AUCTION_END;
+const BID_REQUESTED = CONSTANTS.EVENTS.BID_REQUESTED;
+const BID_TIMEOUT = CONSTANTS.EVENTS.BID_TIMEOUT;
+const BID_RESPONSE = CONSTANTS.EVENTS.BID_RESPONSE;
+const BID_WON = CONSTANTS.EVENTS.BID_WON;
+const BID_ADJUSTMENT = CONSTANTS.EVENTS.BID_ADJUSTMENT;
 
-let initOptions = {gender: null, age: null, id: null, shard: null};
-let bidWon = {options: {}, events: []};
-let eventStack = {options: {}, events: []};
-
-let auctionStatus = 'not_started';
+let initOptions = { gender: null, age: null, id: null, shard: null, experiment: null };
+let eventStack = { auction: {}, results: [] };
+let isAuctionStarted = false;
 
 function checkOptions() {
   return initOptions.shard !== null;
 }
 
-function buildBidWon(eventType, args) {
-  bidWon.options = initOptions;
-  bidWon.events = [{args: args, eventType: eventType}];
+
+function getPayload() {
+  let tempStack = {
+    auction: initOptions,
+    results: {}
+  };
+
+  for (let event of eventStack.events) {
+
+    // this happens once per auction
+    if (event.eventType === AUCTION_INIT) {
+      const init = event;
+      tempStack.auction.timeout = init.args.timeout;
+    }
+
+    // this happens once per bidderCode
+    if (event.eventType === BID_REQUESTED) {
+      const request = event;
+
+      for (let placement of event.args.bids) {
+        const bidderPlacement = `${request.bidder}_${request.placementCode}`;
+
+        let tempResult = tempStack.results[bidderPlacement];
+        tempResult.bidder =  request.bidder;
+        tempResult.placement = request.placementCode;
+        tempResult.status = 'requested';
+        tempStack.results[bidderPlacement] = tempResult;
+      }
+    }
+
+    // this can happen i many variations
+    if (event.eventType === BID_RESPONSE) {
+      const response = event;
+      const responseIsEmpty = (response.args.width === 0 || response.args.height === 0);
+      const bidderPlacement = `${response.args.bidderCode}_${response.args.adUnitCode}`;
+
+      let tempResult = tempStack.results[bidderPlacement] === undefined ? {} : tempStack.results[bidderPlacement];
+
+      // if we already have responded make sure to not overwrite a better bid
+      if ((tempResult === {}) || (response.args.cpm > tempResult.cpm)) {
+        tempResult.status = responseIsEmpty ? 'empty' : 'responded';
+        tempResult.cpm = response.args.cpm;
+        tempResult.timeToRespond = response.args.timeToRespond;
+        tempResult.size = `${response.args.width}x${response.args.height}`;
+        tempStack.results[bidderPlacement] = tempResult;
+      }
+
+      tempStack.results[bidderPlacement] = tempResult;
+    }
+
+    if (event.eventType === AUCTION_END) {
+
+    }
+
+    // make sure how to get adServerPresure, listen to SET_TARGETING
+
+    if (event.eventType === BID_TIMEOUT) {
+      const timeout = event;
+      let newTempStack = tempStack;
+
+      for (let bidderCode of event.args) {
+        newTempStack = newTempStack.results.map(result => {
+          if (result.bidder === bidderCode) {
+            result.status = 'timedout';
+          }
+
+          return result;
+        });
+      }
+
+      tempStack = newTempStack;
+    }
+
+    if (event.eventType === BID_WON) {
+      const win = event;
+      const bidderPlacement = `${win.args.bidderCode}_${win.args.adUnitCode}`;
+
+      let tempResult = tempStack.results[bidderPlacement];
+      tempResult.status = 'won';
+      tempStack.results[bidderPlacement] = tempResult;
+    }
+  }
+
+  // we need to clear all sizes who hasn't timed out or responded to become empty
+
+  return JSON.stringify(tempStack);
 }
 
-function buildEventStack() {
-  eventStack.options = initOptions;
-}
-
-function send(eventType, data, sendDataType) {
-  let fullUrl = url + '&gender=' + initOptions.gender + '&age=' + initOptions.age + '&id=' + initOptions.id + '&shard=' + initOptions.shard;
-
-  ajax(
-    fullUrl,
-    (result) => utils.logInfo('Event ' + eventType + ' sent ' + sendDataType + ' to hpc analytic with result' + result),
-    JSON.stringify(data)
-  );
+function prepareSending() {
+  setTimeout(function() {
+    ajax(
+      url,
+      (result) => {
+        // this is always called
+        utils.logInfo('Sent payload to hpc analytic with result' + result);
+      },
+      getPayload()
+    );
+    flushEvents();
+    isAuctionStarted = false;
+  }, 3000);
 }
 
 function pushEvent(eventType, args) {
-  eventStack.events.push({eventType, args});
+  eventStack.events.push({ eventType, args });
 }
 
 function flushEvents() {
   eventStack.events = [];
 }
 
-let hpcAdapter = Object.assign(adapter({url, analyticsType}),
+let hpcAdapter = Object.assign(adapter({ url, analyticsType }),
   {
-    track({eventType, args}) {
+    track({ eventType, args }) {
       if (!checkOptions()) {
         return;
       }
 
-      let info = Object.assign({}, args);
-
-      if (info && info.ad) {
-        info.ad = '';
-      }
-
-      if (eventType === auctionInitConst) {
-        auctionStatus = 'started';
+      if (eventType === AUCTION_INIT) {
+        isAuctionStarted = true;
         flushEvents();
       }
 
-      if ((eventType === bidWonConst) && auctionStatus === 'not_started') {
-        buildBidWon(eventType, info);
-        send(eventType, bidWon, 'bidWon');
-        return;
-      }
+      pushEvent(eventType, args);
 
-      if (eventType === auctionEndConst) {
-        buildEventStack(eventType);
-        send(eventType, eventStack, 'eventStack');
-        flushEvents();
-        auctionStatus = 'not_started';
-      } else {
-        pushEvent(eventType, info);
+      if (eventType === AUCTION_END) {
+        prepareSending();
       }
     }
   });
