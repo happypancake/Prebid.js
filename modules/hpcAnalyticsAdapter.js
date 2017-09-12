@@ -59,7 +59,7 @@ function getPayload() {
     if (event.eventType === BID_RESPONSE) {
       const response = event;
       const bidderPlacement = `${response.args.bidderCode}_${response.args.adUnitCode}`;
-      const responseIsEmpty == response.args.cpm === 0;
+      const responseIsEmpty = response.args.cpm === 0;
 
       let tempResult = tempStack.results[bidderPlacement];
 
