@@ -84,19 +84,17 @@ function getPayload() {
 
     if (event.eventType === BID_TIMEOUT) {
       const timeout = event;
-      let newTempStack = tempStack;
 
       for (let bidderCode of event.args) {
-        newTempStack.results = newTempStack.results.map(result => {
+        for (let key in tempStack.results) {
+          var result = tempStack.results[key];
           if (result.bidder === bidderCode) {
+            const bidderPlacement = `${result.bidder}_${result.placement}`;
             result.status = 'timedout';
+            tempStack.results[bidderPlacement] = result;
           }
-
-          return result;
-        });
+        }
       }
-
-      tempStack = newTempStack;
     }
 
     if (event.eventType === BID_WON) {
@@ -111,13 +109,15 @@ function getPayload() {
 
   // we need to clear all sizes who hasn't timed out or responded to become empty
   // this should seriously be 0
-  tempStack.results = tempStack.results.map(result => {
-    if (result.status === 'requested') {
-      result.status = 'missing';
-    }
 
-    return result;
-  });
+  for (let key in tempStack.results) {
+    var result = tempStack.results[key];
+    if (result.status === 'requested') {
+      const bidderPlacement = `${result.bidder}_${result.placement}`;
+      result.status = 'missing';
+      tempStack.results[bidderPlacement] = result;
+    }
+  }
 
   return JSON.stringify(tempStack);
 }
