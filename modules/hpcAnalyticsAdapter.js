@@ -15,6 +15,7 @@ const BID_TIMEOUT = CONSTANTS.EVENTS.BID_TIMEOUT;
 const BID_RESPONSE = CONSTANTS.EVENTS.BID_RESPONSE;
 const BID_WON = CONSTANTS.EVENTS.BID_WON;
 const BID_ADJUSTMENT = CONSTANTS.EVENTS.BID_ADJUSTMENT;
+const SET_TARGETING = CONSTANTS.EVENTS.SET_TARGETING;
 
 let initOptions = { gender: null, age: null, id: null, shard: null, experiment: null };
 let eventStack = { auction: {}, results: [] };
@@ -70,9 +71,9 @@ function getPayload() {
       } else if (((tempResult.status === 'requested' || tempResult.status === 'empty') || response.args.cpm > tempResult.cpm) && !responseIsEmpty) {
         tempResult.status = 'responded';
         tempResult.cpm = response.args.cpm;
+        tempResult.adId = response.args.adId;
         tempResult.timeToRespond = response.args.timeToRespond;
         tempResult.size = `${response.args.width}x${response.args.height}`;
-        tempResult.adServerPressure = response.args.adserverTargeting.hp_pressure
       }
 
       tempStack.results[bidderPlacement] = tempResult;
@@ -80,6 +81,22 @@ function getPayload() {
 
     if (event.eventType === AUCTION_END) {
 
+    }
+
+    if (event.eventType === SET_TARGETING) {
+      var winners = pbjs.getAdserverTargeting();
+
+      for (var winnerKey in winners) {
+        var winner = winners[winnerKey];
+        for (let resultKey in tempStack.results) {
+          var result = tempStack.results[resultKey];
+          if (result.adId === winner.hb_adid) {
+            const bidderPlacement = `${result.bidder}_${result.placement}`;
+            result.adServerPressure = winner.hp_pressure;
+            tempStack.results[bidderPlacement] = result;
+          }
+        }
+      }
     }
 
     if (event.eventType === BID_TIMEOUT) {
