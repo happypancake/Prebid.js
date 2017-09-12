@@ -18,12 +18,10 @@ const BID_ADJUSTMENT = CONSTANTS.EVENTS.BID_ADJUSTMENT;
 
 let initOptions = { gender: null, age: null, id: null, shard: null, experiment: null };
 let eventStack = { auction: {}, results: [] };
-let isAuctionStarted = false;
 
 function checkOptions() {
   return initOptions.shard !== null;
 }
-
 
 function getPayload() {
   let tempStack = {
@@ -84,13 +82,12 @@ function getPayload() {
     }
 
     // make sure how to get adServerPresure, listen to SET_TARGETING
-
     if (event.eventType === BID_TIMEOUT) {
       const timeout = event;
       let newTempStack = tempStack;
 
       for (let bidderCode of event.args) {
-        newTempStack = newTempStack.results.map(result => {
+        newTempStack.results = newTempStack.results.map(result => {
           if (result.bidder === bidderCode) {
             result.status = 'timedout';
           }
@@ -113,6 +110,14 @@ function getPayload() {
   }
 
   // we need to clear all sizes who hasn't timed out or responded to become empty
+  // this should seriously be 0
+  tempStack.results = tempStack.results.map(result => {
+    if (result.status === 'requested') {
+      result.status = 'missing';
+    }
+
+    return result;
+  });
 
   return JSON.stringify(tempStack);
 }
@@ -127,8 +132,6 @@ function prepareSending() {
       },
       getPayload()
     );
-    flushEvents();
-    isAuctionStarted = false;
   }, 3000);
 }
 
@@ -148,7 +151,6 @@ let hpcAdapter = Object.assign(adapter({ url, analyticsType }),
       }
 
       if (eventType === AUCTION_INIT) {
-        isAuctionStarted = true;
         flushEvents();
       }
 
