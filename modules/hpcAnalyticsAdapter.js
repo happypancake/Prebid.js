@@ -61,16 +61,15 @@ function getPayload() {
     if (event.eventType === BID_RESPONSE) {
       const response = event;
       const bidderPlacement = `${response.args.bidderCode}_${response.args.adUnitCode}`;
+      const responseIsEmpty == response.args.cpm === 0;
 
       let tempResult = tempStack.results[bidderPlacement];
 
-      // just apply todo fix me
-      if (tempResult.status === 'requested') {
-
-      } else if (response.args.cpm === 0 && tempResult.status !== 'responded') {
+      // we can only apply a empty to a requested, otherwise we will overwrite a response
+      if (tempResult.status === 'requested' && responseIsEmpty) {
         tempResult.status = 'empty';
-      } else if ((response.args.cpm > tempResult.cpm) || (tempResult.status === 'requested' && response.args.cpm > 0)) || (tempResult.status === 'empty' && response.args.cpm > 0)) {
-        // we have a larger response than previous
+        tempResult.timeToRespond = response.args.timeToRespond;
+      } else if (((tempResult.status === 'requested' || tempResult.status === 'empty') || response.args.cpm > tempResult.cpm) && !responseIsEmpty) {
         tempResult.status = 'responded';
         tempResult.cpm = response.args.cpm;
         tempResult.timeToRespond = response.args.timeToRespond;
