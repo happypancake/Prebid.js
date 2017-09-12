@@ -72,6 +72,7 @@ function getPayload() {
         tempResult.cpm = response.args.cpm;
         tempResult.timeToRespond = response.args.timeToRespond;
         tempResult.size = `${response.args.width}x${response.args.height}`;
+        tempResult.adServerPressure = response.args.adserverTargeting.hp_pressure
       }
 
       tempStack.results[bidderPlacement] = tempResult;
@@ -81,7 +82,6 @@ function getPayload() {
 
     }
 
-    // make sure how to get adServerPresure, listen to SET_TARGETING
     if (event.eventType === BID_TIMEOUT) {
       const timeout = event;
       let newTempStack = tempStack;
