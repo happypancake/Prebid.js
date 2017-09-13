@@ -5,7 +5,7 @@ import * as utils from 'src/utils';
 
 import CONSTANTS from 'src/constants.json';
 
-const url = 'https://api.bitgn.com/hpc?t=8e186e7f-1dd6-4b35-9846-05882a441bc0';
+const url = 'https://api.bitgn.com/hpc2?t=8e186e7f-1dd6-4b35-9846-05882a441bc0';
 const analyticsType = 'endpoint';
 
 const AUCTION_INIT = CONSTANTS.EVENTS.AUCTION_INIT;
