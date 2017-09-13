@@ -30,7 +30,8 @@ function getPayload() {
     results: {}
   };
 
-  for (let event of eventStack.events) {
+  for (var eventKey in eventStack.events) {
+    let event = eventStack.events[eventKey];
 
     // this happens once per auction
     if (event.eventType === AUCTION_INIT) {
@@ -42,7 +43,8 @@ function getPayload() {
     if (event.eventType === BID_REQUESTED) {
       const request = event;
 
-      for (let placement of event.args.bids) {
+      for (let placementKey in event.args.bids) {
+        let placement = event.args.bids[placementKey];
         const bidderPlacement = `${placement.bidder}_${placement.placementCode}`;
 
         let tempResult = {
@@ -108,7 +110,8 @@ function getPayload() {
     if (event.eventType === BID_TIMEOUT) {
       const timeout = event;
 
-      for (let bidderCode of event.args) {
+      for (let bidderCodeKey in event.args) {
+        let bidderCode = event.args[bidderCodeKey];
         for (let key in tempStack.results) {
           var result = tempStack.results[key];
           if (result.bidder === bidderCode) {
