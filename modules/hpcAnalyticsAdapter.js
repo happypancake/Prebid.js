@@ -92,7 +92,13 @@ function getPayload() {
           var result = tempStack.results[resultKey];
           if (result.adId === winner.hb_adid) {
             const bidderPlacement = `${result.bidder}_${result.placement}`;
-            result.adServerPressure = winner.hp_pressure;
+
+            let cpmFloat = parseFloat(winner.hp_pressure);
+            if (isNaN(cpmFloat)) {
+              cpmFloat = 0.00;
+            }
+
+            result.adServerPressure = cpmFloat;
             tempStack.results[bidderPlacement] = result;
           }
         }
