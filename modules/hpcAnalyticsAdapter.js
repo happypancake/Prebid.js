@@ -62,7 +62,7 @@ function getPayload() {
     if (event.eventType === BID_RESPONSE) {
       const response = event;
       const bidderPlacement = `${response.args.bidderCode}_${response.args.adUnitCode}`;
-      const responseIsEmpty = response.args.cpm === 0;
+      const responseIsEmpty = response.args.originalCpm === 0;
 
       let tempResult = tempStack.results[bidderPlacement];
 
@@ -70,11 +70,9 @@ function getPayload() {
       if (tempResult.status === 'requested' && responseIsEmpty) {
         tempResult.status = 'empty';
         tempResult.timeToRespond = response.args.timeToRespond;
-      } else if (((tempResult.status === 'requested' || tempResult.status === 'empty') || response.args.cpm > tempResult.cpm) && !responseIsEmpty) {
+      } else if (((tempResult.status === 'requested' || tempResult.status === 'empty') || response.args.originalCpm > tempResult.cpm) && !responseIsEmpty) {
         tempResult.status = 'responded';
-        tempResult.cpm = response.args.cpm;
-        tempResult.adServerPressure = response.args.adServerPressure;
-        tempResult.adId = response.args.adId;
+        tempResult.cpm = response.args.originalCpm;
         tempResult.timeToRespond = response.args.timeToRespond;
         tempResult.size = `${response.args.width}x${response.args.height}`;
       }
