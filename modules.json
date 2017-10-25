@@ -8,5 +8,6 @@
     "rubiconBidAdapter",
     "widespaceBidAdapter",
     "indexExchangeBidAdapter",
+    "improvedigitalBidAdapter",
     "hpcAnalyticsAdapter"
 ]
