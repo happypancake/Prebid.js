@@ -18,20 +18,21 @@ const BID_ADJUSTMENT = CONSTANTS.EVENTS.BID_ADJUSTMENT;
 const SET_TARGETING = CONSTANTS.EVENTS.SET_TARGETING;
 
 let initOptions = { gender: null, age: null, id: null, shard: null, experiment: null };
-let eventStack = { auction: {}, results: [] };
+let eventStack = [];
+const endedAuctions = { placements: {} };
 
 function checkOptions() {
   return initOptions.shard !== null;
 }
 
-function getPayload() {
+function transformEvents(placement) {
   let tempStack = {
     auction: initOptions,
     results: {}
   };
 
-  for (var eventKey in eventStack.events) {
-    let event = eventStack.events[eventKey];
+  for (let eventKey in endedAuctions.placements[placement]) {
+    const event = endedAuctions.placements[placement][eventKey];
 
     // this happens once per auction
     if (event.eventType === AUCTION_INIT) {
@@ -43,8 +44,8 @@ function getPayload() {
     if (event.eventType === BID_REQUESTED) {
       const request = event;
 
-      for (let placementKey in event.args.bids) {
-        let placement = event.args.bids[placementKey];
+      for (let placementKey in request.args.bids) {
+        let placement = request.args.bids[placementKey];
         const bidderPlacement = `${placement.bidder}_${placement.placementCode}`;
 
         let tempResult = {
@@ -90,10 +91,10 @@ function getPayload() {
     if (event.eventType === BID_TIMEOUT) {
       const timeout = event;
 
-      for (let bidderCodeKey in event.args) {
-        let bidderCode = event.args[bidderCodeKey];
+      for (let bidderCodeKey in timeout.args) {
+        let bidderCode = timeout.args[bidderCodeKey];
         for (let key in tempStack.results) {
-          var result = tempStack.results[key];
+          const result = tempStack.results[key];
           if (result.bidder === bidderCode) {
             const bidderPlacement = `${result.bidder}_${result.placement}`;
             result.status = 'timedout';
@@ -117,7 +118,7 @@ function getPayload() {
   // this should seriously be 0
 
   for (let key in tempStack.results) {
-    var result = tempStack.results[key];
+    const result = tempStack.results[key];
     if (result.status === 'requested') {
       const bidderPlacement = `${result.bidder}_${result.placement}`;
       result.status = 'missing';
@@ -128,7 +129,7 @@ function getPayload() {
   return JSON.stringify(tempStack);
 }
 
-function prepareSending() {
+function prepareSending(placement) {
   setTimeout(function() {
     ajax(
       url,
@@ -136,17 +137,42 @@ function prepareSending() {
         // this is always called
         utils.logInfo('Sent payload to hpc analytic with result' + result);
       },
-      getPayload()
+      transformEvents(placement)
     );
-  }, 3000);
+  }, 5000);
 }
 
 function pushEvent(eventType, args) {
-  eventStack.events.push({ eventType, args });
+  eventStack.push({ eventType, args });
+}
+
+function moveToEndedAuctions() {
+  let placement = null;
+
+  for (let eventKey in eventStack) {
+    const event = eventStack[eventKey];
+
+    if (event.eventType === BID_REQUESTED) {
+      const request = event;
+
+      for (let placementKey in request.args.bids) {
+        const p = request.args.bids[placementKey];
+        placement = p.placementCode;
+        break;
+      }
+    }
+  }
+
+  endedAuctions.placements[placement] = eventStack;
+  return placement;
+}
+
+function pushEventToEndedAuctions(placement, eventType, args) {
+  endedAuctions.placements[placement].push({ eventType, args });
 }
 
 function flushEvents() {
-  eventStack.events = [];
+  eventStack = [];
 }
 
 let hpcAdapter = Object.assign(adapter({ url, analyticsType }),
@@ -163,7 +189,17 @@ let hpcAdapter = Object.assign(adapter({ url, analyticsType }),
       pushEvent(eventType, args);
 
       if (eventType === AUCTION_END) {
-        prepareSending();
+        const placement = moveToEndedAuctions();
+      }
+
+      if (eventType === SET_TARGETING) {
+        const placement = args[0];
+        prepareSending(placement);
+      }
+
+      if (eventType === BID_WON) {
+        const placement = args.adUnitCode;
+        pushEventToEndedAuctions(placement, eventType, args);
       }
     }
   });
