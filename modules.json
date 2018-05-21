@@ -6,5 +6,6 @@
   "rubiconBidAdapter",
   "widespaceBidAdapter",
   "ixBidAdapter",
-  "improvedigitalBidAdapter"
+  "improvedigitalBidAdapter",
+  "hpcAnalyticsAdapter"
 ]
