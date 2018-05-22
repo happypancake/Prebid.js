@@ -45,7 +45,7 @@ function getPayload() {
 
       for (let placementKey in event.args.bids) {
         let placement = event.args.bids[placementKey];
-        const bidderPlacement = `${placement.bidder}_${placement.placementCode}`;
+        const bidderPlacement = `${placement.bidder}_${placement.adUnitCode}`;
 
         let tempResult = {
           bidder: placement.bidder,
