@@ -14,7 +14,6 @@ const BID_REQUESTED = CONSTANTS.EVENTS.BID_REQUESTED;
 const BID_TIMEOUT = CONSTANTS.EVENTS.BID_TIMEOUT;
 const BID_RESPONSE = CONSTANTS.EVENTS.BID_RESPONSE;
 const BID_WON = CONSTANTS.EVENTS.BID_WON;
-const BID_ADJUSTMENT = CONSTANTS.EVENTS.BID_ADJUSTMENT;
 const SET_TARGETING = CONSTANTS.EVENTS.SET_TARGETING;
 
 let initOptions = { gender: null, age: null, id: null, shard: null, experiment: null };
@@ -43,13 +42,13 @@ function getPayload() {
     if (event.eventType === BID_REQUESTED) {
       const request = event;
 
-      for (let placementKey in event.args.bids) {
+      for (let placementKey in request.args.bids) {
         let placement = event.args.bids[placementKey];
         const bidderPlacement = `${placement.bidder}_${placement.adUnitCode}`;
 
         let tempResult = {
           bidder: placement.bidder,
-          placement: placement.placementCode,
+          placement: placement.adUnitCode,
           status: 'requested',
           cpm: 0
         };
@@ -61,7 +60,7 @@ function getPayload() {
     // this can happen i many variations
     if (event.eventType === BID_RESPONSE) {
       const response = event;
-      const bidderPlacement = `${response.args.bidderCode}_${response.args.adUnitCode}`;
+      const bidderPlacement = `${response.args.bidder}_${response.args.adUnitCode}`;
       const responseIsEmpty = response.args.originalCpm === 0;
 
       let tempResult = tempStack.results[bidderPlacement];
@@ -88,10 +87,10 @@ function getPayload() {
     }
 
     if (event.eventType === BID_TIMEOUT) {
-      const timeout = event;
+      const timeouts = event;
 
-      for (let bidderCodeKey in event.args) {
-        let bidderCode = event.args[bidderCodeKey];
+      for (let timeout of timeouts.args) {
+        let bidderCode = timeout.bidder;
         for (let key in tempStack.results) {
           var result = tempStack.results[key];
           if (result.bidder === bidderCode) {
@@ -105,7 +104,7 @@ function getPayload() {
 
     if (event.eventType === BID_WON) {
       const win = event;
-      const bidderPlacement = `${win.args.bidderCode}_${win.args.adUnitCode}`;
+      const bidderPlacement = `${win.args.bidder}_${win.args.adUnitCode}`;
 
       let tempResult = tempStack.results[bidderPlacement];
       tempResult.status = 'won';
@@ -117,7 +116,7 @@ function getPayload() {
   // this should seriously be 0
 
   for (let key in tempStack.results) {
-    var result = tempStack.results[key];
+    const result = tempStack.results[key];
     if (result.status === 'requested') {
       const bidderPlacement = `${result.bidder}_${result.placement}`;
       result.status = 'missing';
