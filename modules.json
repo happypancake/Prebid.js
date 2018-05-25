@@ -1,6 +1,7 @@
 [
   "adformBidAdapter",
   "appnexusBidAdapter",
+  "criteoBidAdapter",
   "openxBidAdapter",
   "pubmaticBidAdapter",
   "rubiconBidAdapter",
