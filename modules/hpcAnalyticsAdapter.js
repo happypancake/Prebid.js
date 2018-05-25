@@ -161,7 +161,7 @@ let hpcAdapter = Object.assign(adapter({ url, analyticsType }),
 
       pushEvent(eventType, args);
 
-      if (eventType === AUCTION_END) {
+      if (eventType === SET_TARGETING) {
         prepareSending();
       }
     }
