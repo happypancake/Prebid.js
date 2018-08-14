@@ -78,6 +78,25 @@ export function newTargeting(auctionManager) {
       .concat(getCustomBidTargeting(adUnitCodes, bidsReceived))
       .concat(config.getConfig('enableSendAllBids') ? getBidLandscapeTargeting(adUnitCodes, bidsReceived) : []);
 
+    // make sure at least there is a entry per adUnitCode in the targeting so receivers of SET_TARGETING call's can know what ad units are being invoked
+
+    adUnitCodes.forEach(key => {
+      if (!targeting.some(target => {
+        let hasMatchingAdUnitCode = false;
+
+        Object.getOwnPropertyNames(target).forEach(targetKey => {
+          if (targetKey === key) {
+            hasMatchingAdUnitCode = true;
+          }
+        });
+        return hasMatchingAdUnitCode;
+      })) {
+        const emptyTargeting = {};
+        emptyTargeting[key] = [];
+        targeting.push(emptyTargeting);
+      }
+    });
+
     // store a reference of the targeting keys
     targeting.map(adUnitCode => {
       Object.keys(adUnitCode).map(key => {
@@ -141,9 +160,9 @@ export function newTargeting(auctionManager) {
    * Sets targeting for DFP
    * @param {Object.<string,Object.<string,string>>} targetingConfig
    */
-  targeting.setTargetingForGPT = function(targetingConfig) {
+  targeting.setTargetingForGPT = function(targetingConfig, customSlotMatching) {
     window.googletag.pubads().getSlots().forEach(slot => {
-      Object.keys(targetingConfig).filter(isAdUnitCodeMatchingSlot(slot))
+      Object.keys(targetingConfig).filter(customSlotMatching ? customSlotMatching(slot) : isAdUnitCodeMatchingSlot(slot))
         .forEach(targetId =>
           Object.keys(targetingConfig[targetId]).forEach(key => {
             let valueArr = targetingConfig[targetId][key].split(',');
