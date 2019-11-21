@@ -110,9 +110,15 @@ function resizeRemoteCreative({ adId, adUnitCode, width, height }) {
   }
 
   function getDfpElementId(adId) {
-    return find(window.googletag.pubads().getSlots().filter(s =>
+    let matchingSlot = find(window.googletag.pubads().getSlots().filter(s =>
       includes(s.getTargeting('hb_adid'), adId)
-    ), slot => slot).getSlotElementId();
+    ), slot => slot);
+
+    if (matchingSlot) {
+      return matchingSlot.getSlotElementId();
+    } else {
+      return null;
+    }
   }
 
   function getAstElementId(adUnitCode) {
