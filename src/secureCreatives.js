@@ -82,6 +82,8 @@ export function _sendAdToCreative(adObject, remoteDomain, source) {
 
 function resizeRemoteCreative({ adId, adUnitCode, width, height }) {
   // resize both container div + iframe
+  // ['div:last-child', 'div:last-child iframe'].forEach(elmType => {
+  // https://github.com/prebid/Prebid.js/issues/4418#issuecomment-549996479
   ['div[id^="google_ads_iframe"]', 'iframe[id^="google_ads_iframe"]'].forEach(elmType => {
     let element = getElementByAdUnit(elmType);
     if (element) {
@@ -94,7 +96,7 @@ function resizeRemoteCreative({ adId, adUnitCode, width, height }) {
   });
 
   function getElementByAdUnit(elmType) {
-    let id = getElementIdBasedOnAdServer(adUnitCode);
+    let id = getElementIdBasedOnAdServer(adId, adUnitCode);
     let parentDivEle = document.getElementById(id);
     return parentDivEle && parentDivEle.querySelector(elmType);
   }
@@ -110,15 +112,9 @@ function resizeRemoteCreative({ adId, adUnitCode, width, height }) {
   }
 
   function getDfpElementId(adId) {
-    let matchingSlot = find(window.googletag.pubads().getSlots().filter(s =>
+    return find(window.googletag.pubads().getSlots().filter(s =>
       includes(s.getTargeting('hb_adid'), adId)
-    ), slot => slot);
-
-    if (matchingSlot) {
-      return matchingSlot.getSlotElementId();
-    } else {
-      return null;
-    }
+    ), slot => slot).getSlotElementId();
   }
 
   function getAstElementId(adUnitCode) {
