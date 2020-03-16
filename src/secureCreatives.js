@@ -3,19 +3,19 @@
    access to a publisher page from creative payloads.
  */
 
-import events from './events';
-import { fireNativeTrackers, getAssetMessage } from './native';
-import { EVENTS } from './constants';
-import { logWarn, replaceAuctionPrice } from './utils';
-import { auctionManager } from './auctionManager';
-import find from 'core-js/library/fn/array/find';
-import includes from 'core-js/library/fn/array/includes';
-import { isRendererRequired, executeRenderer } from './Renderer';
+import events from './events.js';
+import { fireNativeTrackers, getAssetMessage } from './native.js';
+import { EVENTS } from './constants.json';
+import { logWarn, replaceAuctionPrice } from './utils.js';
+import { auctionManager } from './auctionManager.js';
+import find from 'core-js/library/fn/array/find.js';
+import { isRendererRequired, executeRenderer } from './Renderer.js';
+import includes from 'core-js/library/fn/array/includes.js';
 
 const BID_WON = EVENTS.BID_WON;
 
 export function listenMessagesFromCreative() {
-  addEventListener('message', receiveMessage, false);
+  window.addEventListener('message', receiveMessage, false);
 }
 
 function receiveMessage(ev) {
@@ -82,10 +82,9 @@ export function _sendAdToCreative(adObject, remoteDomain, source) {
 
 function resizeRemoteCreative({ adId, adUnitCode, width, height }) {
   // resize both container div + iframe
-  // ['div:last-child', 'div:last-child iframe'].forEach(elmType => {
-  // https://github.com/prebid/Prebid.js/issues/4418#issuecomment-549996479
-  ['div[id^="google_ads_iframe"]', 'iframe[id^="google_ads_iframe"]'].forEach(elmType => {
-    let element = getElementByAdUnit(elmType);
+  ['div', 'iframe'].forEach(elmType => {
+    // not select element that gets removed after dfp render
+    let element = getElementByAdUnit(elmType + ':not([style*="display: none"])');
     if (element) {
       let elementStyle = element.style;
       elementStyle.width = width + 'px';
@@ -112,9 +111,11 @@ function resizeRemoteCreative({ adId, adUnitCode, width, height }) {
   }
 
   function getDfpElementId(adId) {
-    return find(window.googletag.pubads().getSlots().filter(s =>
-      includes(s.getTargeting('hb_adid'), adId)
-    ), slot => slot).getSlotElementId();
+    return find(window.googletag.pubads().getSlots(), slot => {
+      return find(slot.getTargetingKeys(), key => {
+        return includes(slot.getTargeting(key), adId);
+      });
+    }).getSlotElementId();
   }
 
   function getAstElementId(adUnitCode) {
